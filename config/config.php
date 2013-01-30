@@ -9,7 +9,7 @@ $config['wpdb'] =
 		'pass'=>'',
 		'host'=>'localhost',
 		'port'=>'3306',
-		'dbname'=>'koko'
+		'dbname'=>''
 		);
 
 $config['wp_prefix'] = 'wp';
