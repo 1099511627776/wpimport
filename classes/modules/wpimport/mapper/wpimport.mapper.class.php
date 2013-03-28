@@ -1,4 +1,4 @@
-<?
+<?php
 class PluginWpimport_ModuleWpimport_MapperWpimport extends Mapper
 {
 

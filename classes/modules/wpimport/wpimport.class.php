@@ -26,7 +26,7 @@ class PluginWpimport_ModuleWpimport extends Module
 	
 	public function Init()
 	{
-		$conn = $this->Database_GetConnect(Config::Get('plugin.wpimport.joomladb'));
+		$conn = $this->Database_GetConnect(Config::Get('plugin.wpimport.wpdb'));
 		$this->oMapper = Engine::GetMapper(__CLASS__, 'wpimport', $conn);
 	}
 	private function clearComments($cid) {
@@ -145,7 +145,7 @@ class PluginWpimport_ModuleWpimport extends Module
 			$topics = $this->oMapper->getTopicList(Config::Get('plugin.wpimport.wp_prefix'),$page,$pagesize);
 			$tpc = $topics['collection'];
 		 	foreach($tpc as $id => $topic) {	 		
-		 		if($oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByK2Id($id)) {
+		 		if($oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByWPId($id)) {
 		 			$tpc[$id]['status'] = 'exists';		 			
 		 		}
 				/*$sMD5Match = $topic['hash'];
@@ -475,7 +475,7 @@ class PluginWpimport_ModuleWpimport extends Module
 		if(!$comments){
 			return "no comment";
 		}
-		$oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByK2Id($cid);
+		$oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByWPId($cid);
 /*		print $tid."<br />";
 		print $cid;
 
@@ -500,7 +500,7 @@ class PluginWpimport_ModuleWpimport extends Module
 					if($oUser) {
 						$uid = $oUser->getId();
 					} else {
-						$uid = 257;
+						$uid = Config::Get('plugin.wpimport.anonymous_user');
 					}
 					$lscomm->setUserId($uid);
 					$ctext = $this->bbCode($commbody['comment']);
@@ -524,7 +524,7 @@ class PluginWpimport_ModuleWpimport extends Module
 	public function addPost($tid) {
 		$post = $this->getPosts($tid);
 		foreach($post as $aid => $aTopic) {
-			$oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByK2Id($tid);
+			$oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByWPId($tid);
 			//$oTopic = $this->JoomlaPost2Topic($tid);
 			if ($oTopic) {
 				$this->makeTopic($oTopic,$aTopic);
@@ -542,7 +542,7 @@ class PluginWpimport_ModuleWpimport extends Module
 				    	$this->makeGallery($oTopic,$aTopic);
 				    }
 				}
-				$this->Pluginwpimport_ModuleLstopic_setTopicK2Id($oTopic,$tid);
+				$this->Pluginwpimport_ModuleLstopic_setTopicWPId($oTopic,$tid);
 				$this->Hook_Run('topic_add_after',array('oTopic'=>$oTopic,'oBlog'=>$oTopic->getBlog()));
 				return "created";
 			}

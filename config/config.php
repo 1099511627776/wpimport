@@ -13,8 +13,10 @@ $config['wpdb'] =
 		);
 
 $config['wp_prefix'] = 'wp';
-$config['wpsite'] = 'http://koko.by/';
+$config['wpsite'] = '';
 $config['wp_fileroot'] = '';
+
+$config['anonymous_user'] = 1;
 
 Config::Set('router.page.wpimport', 'PluginWpimport_ActionAdmin');
 return $config;

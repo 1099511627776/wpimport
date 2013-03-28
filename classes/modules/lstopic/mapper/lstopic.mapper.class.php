@@ -15,7 +15,7 @@ class PluginWpimport_ModuleLstopic_MapperLstopic extends Mapper
 		return false;
 	}
 
-	public function setTopicK2Id($topic_id,$id) {
+	public function setTopicWPId($topic_id,$id) {
 		$sql = "UPDATE ".Config::Get('db.table.topic')." SET wp_id = ?d WHERE topic_id = ?d";
 		if($this->oDb->query($sql,$id,$topic_id)){
 			return true;
