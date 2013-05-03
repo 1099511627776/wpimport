@@ -23,7 +23,7 @@ class PluginWpimport extends Plugin
 
     public $aDelegates = array(
             'action' => array(
-	            'ActionError' => '_ActionRouteWp',
+                'ActionError' => '_ActionRouteWp',
             ),
     );
 
@@ -34,7 +34,7 @@ class PluginWpimport extends Plugin
     }
 
     public function Deactivate(){       
-        $this->ExportSQL(dirname(__FILE__).'/deinstall.sql'); // Выполнить деактивационный sql, если надо.        
+        $this->ExportSQL(dirname(__FILE__).'/deinstall.sql'); // Выполнить деактивационный sql, если надо.
         return true;
     }
 
