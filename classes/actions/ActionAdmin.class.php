@@ -116,14 +116,14 @@ class PluginWpimport_ActionAdmin extends ActionPlugin
             $this->Viewer_SetResponseAjax('json');
             $status = $this->addComments($cid);
             $this->Viewer_AssignAjax('cid',$cid);
-            $this->Viewer_AssignAjax('status',$status);         
+            $this->Viewer_AssignAjax('status',$status);
         } else {
             $pts = $this->getPosts($iPage,2000);
             $count = $pts['count'];
             $posts = $pts['collection'];
             $aPaging=$this->Viewer_MakePaging($count,$iPage,2000,Config::Get('pagination.pages.count'),Router::GetPath('wpimport/posts'));
             $this->Viewer_Assign('aPaging',$aPaging);
-            $this->Viewer_Assign('aPosts',$posts);          
+            $this->Viewer_Assign('aPosts',$posts);
         }
     }
 

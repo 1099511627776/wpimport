@@ -524,7 +524,7 @@ class PluginWpimport_Modulewpimport extends Module
     public function addPost($tid) {
         $post = $this->getPosts($tid);
         foreach($post as $aid => $aTopic) {
-            $oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByWPId($tid);
+            $oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByWpId($tid);
             //$oTopic = $this->JoomlaPost2Topic($tid);
             if ($oTopic) {
                 $this->makeTopic($oTopic,$aTopic);
@@ -542,7 +542,7 @@ class PluginWpimport_Modulewpimport extends Module
                         $this->makeGallery($oTopic,$aTopic);
                     }
                 }
-                $this->Pluginwpimport_ModuleLstopic_setTopicWPId($oTopic,$tid);
+                $this->Pluginwpimport_ModuleLstopic_setTopicWpId($oTopic,$tid);
                 $this->Hook_Run('topic_add_after',array('oTopic'=>$oTopic,'oBlog'=>$oTopic->getBlog()));
                 return "created";
             }
