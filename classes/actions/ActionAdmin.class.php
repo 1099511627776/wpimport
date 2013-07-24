@@ -25,7 +25,14 @@ class PluginWpimport_ActionAdmin extends ActionPlugin
     protected function RegisterEvent()
     {
         $this->AddEvent('admin', 'EventAdmin');
-        $this->AddEvent('users', 'EventUsers');
+        $this->AddEvent('users','EventUsers');
+        $this->AddEventPreg('/^pusers$/i','/^$/i','EventPUsers');
+        $this->AddEventPreg('/^pusers$/i','/^page(\d+?)$/i','EventPUsers');
+
+        $this->AddEventPreg('/^pages$/i','/^$/i','EventPages');
+        $this->AddEventPreg('/^pages$/i','/^page(\d+?)$/i','EventPages');
+        $this->AddEventPreg('/^pages$/i','/^(\d+?)$/i','EventImportPage');
+
         $this->AddEvent('categories', 'EventCategories');
         $this->AddEvent('comments', 'EventComments');
         $this->AddEventPreg('/^posts$/i','/^(page(\d+))?$/i','EventPosts');
@@ -47,9 +54,6 @@ class PluginWpimport_ActionAdmin extends ActionPlugin
         return $this->PluginWpimport_wpimport_addCat($cid);
     }
 
-    private function getPosts($page=null,$pagesize=null){
-        return $this->PluginWpimport_wpimport_GetPosts(null,$page,$pagesize);
-    }
     private function addPost($tid) {
         return $this->PluginWpimport_wpimport_addPost($tid);
     }
@@ -62,8 +66,29 @@ class PluginWpimport_ActionAdmin extends ActionPlugin
         $this->SetTemplateAction('admin');
     }
 
+    protected function EventPages(){
+        $iPerPage = Config::Get('plugin.wpimport.per_page');
+        $iPage = $this->getParamEventMatch(0,1) ? $this->getParamEventMatch(0,1) : 1;
+        $aResult = $this->PluginWpimport_wpimport_GetPages($iPage,$iPerPage);
+        $aPaging=$this->Viewer_MakePaging($aResult['count'],$iPage,$iPerPage,Config::Get('pagination.pages.count'),Router::GetPath('wpimport')."pages/");
+        $this->Viewer_Assign('aPages',$aResult['collection']);
+        $this->Viewer_Assign('aPaging',$aPaging);
+    }
+
+    protected function EventImportPage(){
+        $this->Viewer_SetResponseAjax('json');
+        if(!$iPageId = $this->getParamEventMatch(0,1)){
+            $this->Message_AddError('No pageid:'.$iPageId);
+            return;
+        };
+        $this->PluginWpimport_wpimport_addPage($id);
+    }
+
     protected function EventUsers()
     {
+        //print_r($this);
+        //die();
+        //$iPage = $this->getParamEventMatch(0,1) ? $this->getParamEventMatch(0,1) : 1;
         $params = $this->getParams();
         $this->Viewer_Assign('sTemplateWebPathPlugin',Plugin::GetTemplateWebPath(get_class($this)));
         if ($params) {
@@ -73,9 +98,18 @@ class PluginWpimport_ActionAdmin extends ActionPlugin
             $this->Viewer_AssignAjax('id',$uId);
             $this->Viewer_AssignAjax('status',$status);
         } else {
-            $users = $this->PluginWpimport_wpimport_ImportUsers();
-            $this->Viewer_Assign('aUsers',$this->getUsers());           
+            //$users = $this->PluginWpimport_wpimport_ImportUsers();
+            $this->Viewer_Assign('aUsers',$this->getUsers());
         }
+    }
+
+    protected function EventPUsers(){
+        $iPerPage = Config::Get('plugin.wpimport.per_page');
+        $iPage = $this->getParamEventMatch(0,1) ? $this->getParamEventMatch(0,1) : 1;
+        $aResult = $this->PluginWpimport_wpimport_GetPUsers($iPage,$iPerPage);
+        $aPaging=$this->Viewer_MakePaging($aResult['count'],$iPage,$iPerPage,Config::Get('pagination.pages.count'),Router::GetPath('wpimport')."pusers/");
+        $this->Viewer_Assign('aUsers',$aResult['collection']);
+        $this->Viewer_Assign('aPaging',$aPaging);
     }
 
     protected function EventCategories()
@@ -118,12 +152,10 @@ class PluginWpimport_ActionAdmin extends ActionPlugin
             $this->Viewer_AssignAjax('cid',$cid);
             $this->Viewer_AssignAjax('status',$status);
         } else {
-            $pts = $this->getPosts($iPage,2000);
-            $count = $pts['count'];
-            $posts = $pts['collection'];
-            $aPaging=$this->Viewer_MakePaging($count,$iPage,2000,Config::Get('pagination.pages.count'),Router::GetPath('wpimport/posts'));
+            $aResult = $this->PluginWpimport_wpimport_getPosts($iPage,Config::Get('plugin.wpimport.per_page'));
+            $aPaging=$this->Viewer_MakePaging($aResult['count'],$iPage,Config::Get('plugin.wpimport.per_page'),Config::Get('pagination.pages.count'),Router::GetPath('wpimport/posts'));
             $this->Viewer_Assign('aPaging',$aPaging);
-            $this->Viewer_Assign('aPosts',$posts);
+            $this->Viewer_Assign('aPosts',$aResult['collection']);
         }
     }
 
