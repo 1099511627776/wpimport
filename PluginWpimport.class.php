@@ -38,6 +38,10 @@ class PluginWpimport extends Plugin
         return true;
     }
 
+    public function Init() {
+        $this->Viewer_AppendScript(Plugin::GetTemplatePath(__CLASS__)."/js/wpimport.js");
+        $this->Viewer_AppendStyle(Plugin::GetTemplatePath(__CLASS__)."/css/styles.css");
+    }
 }
 
 ?>

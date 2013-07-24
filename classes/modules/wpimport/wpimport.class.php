@@ -72,9 +72,36 @@ class PluginWpimport_Modulewpimport extends Module
         $oUser->setActivateKey(null);
         $oUser->setProfileSite($aUser['url']);
         $oUser->setProfileName($aUser['name']);
+        if($rating = $this->getUserParam($aUser['id'],'rating_profile')){
+            $oUser->setRating($rating);
+        }
+        if($karma = $this->getUserParam($aUser['id'],'author_karma')){
+            $oUser->setSkill($karma);
+        }
+        if($avatar = $this->getUserParam($aUser['id'],'youravat')){
+            if($sUrlWeb = $this->Topic_UploadTopicImageUrl($avatar, $oUser)){
+                $sPhotoWeb = $this->Image_GetServerPath($sUrlWeb);
+                if($sFileWeb = $this->User_UploadAvatar($sPhotoWeb,$oUser)) {
+                    if ($sFileWeb!=$oUser->getProfileAvatar()) {
+                        $this->User_DeleteAvatar($oUser);
+                    }
+                    $oUser->setProfileAvatar($sFileWeb);
+                };
+                if($sFileWeb = $this->User_UploadFoto($sPhotoWeb,$oUser)) {
+                    if ($sFileWeb!=$oUser->getProfileFoto()) {
+                        $this->User_DeleteFoto($oUser);
+                    }
+                    $oUser->setProfilePhoto($sFileWeb);
+                };
+                @unlink($sFileWeb);
+            }
+        }
+        if($desc = $this->getUserParam($aUser['id'],'description')){
+            $oUser->setProfileAbout($desc);
+        }
         $g = (trim($aUser['gender']) == 'm') ? 'man' : ((trim($aUser['gender']) == 'f') ? 'woman': 'other');
         $oUser->setProfileSex($g);
-        if(array_key_exists('image',$aUser)){
+        /*if(array_key_exists('image',$aUser)){
             $sPhotoUrl = Config::Get('plugin.wpimport.wpsite').'/'.Config::Get('plugin.wpimport.wp_avatars').$aUser['image'];
             $sPhotoPath = $this->UploadImageByUrl($sPhotoUrl);
             if($sFileWeb = $this->User_UploadAvatar($sPhotoPath,$oUser)) {
@@ -83,7 +110,7 @@ class PluginWpimport_Modulewpimport extends Module
                 }
                 $oUser->setProfileAvatar($sFileWeb);                
             };
-        }
+        }*/
         //print "before";
         $this->User_Update($oUser);
         //print "after";
@@ -108,9 +135,27 @@ class PluginWpimport_Modulewpimport extends Module
         $sTextfull = preg_replace('/\[del\](.*?)\[\/del\]/i','<s>$1</s>',$sTextfull);
         $sTextfull = preg_replace('/\[b\](.*?)\[\/b\]/i','<strong>$1</strong>',$sTextfull);
         $sTextfull = preg_replace('/\[img src=(.*?)\]/i','<img src=$1></img>',$sTextfull);
+        $sTextfull = preg_replace('/\[img\](.*?)\[\/img\]/i','<img src=$1></img>',$sTextfull);
+
         $sTextfull = preg_replace('/\[a href=(.*?)\](.*?)\[\/a\]/i','<a href=$1>$2</a>',$sTextfull);
         $sTextfull = preg_replace('/\[quote(.*?)\](.*?)\[\/quote\]/i','<blockquote>$2</blockquote>',$sTextfull);
         return $sTextfull;
+    }
+
+    public function getPUsers($iPage,$iPerPage){
+        $iCount = 0;
+        $aResult = $this->oMapper->getUserList(Config::Get('plugin.wpimport.wp_prefix'),$iCount,$iPage,$iPerPage);
+        foreach($aResult as &$User){
+            if($oUser = $this->User_GetUserByLogin($User['login'])){
+                $User['ls_status'] = 'exists';
+            } else {
+                $User['ls_status'] = '';
+            }
+        }
+        return array(
+            'collection' => $aResult,
+            'count' => $iCount
+        );
     }
 
     public function getUsers($uid = null){
@@ -134,36 +179,53 @@ class PluginWpimport_Modulewpimport extends Module
                     $this->Message_AddNotice($oUser['image']);
                 }       
                 $this->addUser($oUser['id']);
-                //print_r($oUser);
+                print $oUser['id']."\n";
             }
         }
     }
-    public function getPosts($tid = null,$page=null,$pagesize=null) {
-        if($tid) {
-            return $this->oMapper->getTopic(Config::Get('plugin.wpimport.wp_prefix'),$tid);
-        } else {
-            $topics = $this->oMapper->getTopicList(Config::Get('plugin.wpimport.wp_prefix'),$page,$pagesize);
-            $tpc = $topics['collection'];
-            foreach($tpc as $id => $topic) {            
-                if($oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByWPId($id)) {
-                    $tpc[$id]['status'] = 'exists';                 
-                }
-                /*$sMD5Match = $topic['hash'];
-                if(preg_match('/^<img(.*?)src=\"(.*?)\">(.*?)/is', $sMD5Match, $aData)) {
-                    $aMD5Match = $aData['2'];
-                } else {
-                    $aMD5Match = $sMD5Match;
-                }
-                $oUser = $this->User_GetUserByLogin($topic['created_by']);
-                $uid = ($oUser) ? $oUser->getId() : 1;
-                if($this->Topic_GetTopicUnique($uid,md5($aMD5Match))){
-                    $tpc[$id]['status'] = 'exists';
-                }*/
-            }
-            $topics['collection'] = $tpc;
-            return  $topics;
-        }
+    public function getPost($tid){
+        return $this->oMapper->getTopic(Config::Get('plugin.wpimport.wp_prefix'),$tid);
     }
+    public function getPosts($iPage,$iPerPage) {
+        $topics = $this->oMapper->getTopicList($iPage,$iPerPage);
+        $tpc = $topics['collection'];
+        foreach($tpc as $id => $topic) {            
+            if($oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByWPId($id)) {
+                $tpc[$id]['status'] = 'exists';                 
+            }
+            /*$sMD5Match = $topic['hash'];
+            if(preg_match('/^<img(.*?)src=\"(.*?)\">(.*?)/is', $sMD5Match, $aData)) {
+                $aMD5Match = $aData['2'];
+            } else {
+                $aMD5Match = $sMD5Match;
+            }
+            $oUser = $this->User_GetUserByLogin($topic['created_by']);
+            $uid = ($oUser) ? $oUser->getId() : 1;
+            if($this->Topic_GetTopicUnique($uid,md5($aMD5Match))){
+                $tpc[$id]['status'] = 'exists';
+            }*/
+        }
+        $topics['collection'] = $tpc;
+        return  $topics;
+    }
+
+    public function getPages($iPage,$iPerPage) {
+        $iCount = 0;
+        $aPages = $this->oMapper->getPages($iCount,$iPage,$iPerPage);
+/*        $tpc = $aPages['collection'];
+        foreach($tpc as $id => $topic) 
+            if($oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByWPId($id)) {
+                $tpc[$id]['status'] = 'exists';                 
+            }
+        }
+        $aPages['collection'] = $tpc;*/
+        return array(
+            'collection' => $aPages,
+            'count' => $iCount
+        );
+    }
+
+    
     public function getCats($cid = null){
         if($cid) {
             return $this->oMapper->getCat(Config::Get('plugin.wpimport.wp_prefix'),$cid);
@@ -368,6 +430,7 @@ class PluginWpimport_Modulewpimport extends Module
         $oTopic->setTitle($sTitle);
         //$oTopic->setId($aTopic['id']);
         $oTopic->setDateAdd($aTopic['date']);
+        //print_r($aTopic);
         if($oUser = $this->User_GetUserByLogin($aTopic['created_by'])){
             $userid = $oUser->getId();      
         } else {
@@ -383,7 +446,7 @@ class PluginWpimport_Modulewpimport extends Module
         }
 
         $oTopic->setTags($aTopic['tags']);
-        $sTextfull = $aTopic['introtext'].$aTopic['fulltext'];
+        $sTextfull = $aTopic['introtext']."<cut />".$aTopic['fulltext'];
 
         //images
         preg_match_all('/<img(.*?)src=\"(.*?)\"(.*?)>/is', $sTextfull, $aData, PREG_PATTERN_ORDER);
@@ -392,7 +455,7 @@ class PluginWpimport_Modulewpimport extends Module
         if (!empty($aImg)) {
             foreach ($aImg as $key => $sPath) {
                 if(strpos($sPath,'://')===false){
-                 $sPPath = Config::Get('plugin.wpimport.joomlasite').$sPath;
+                 $sPPath = Config::Get('plugin.wpimport.wpsite').$sPath;
                 } else {
                  $sPPath = $sPath;
                 }
@@ -416,14 +479,27 @@ class PluginWpimport_Modulewpimport extends Module
             $sTextfull = $sTextfull."<br />".$aTopic['video'];
         }*/
 
-        $sTextfull = '<p>'.$sTextfull.'</p>';
+        /*$sTextfull = '<p>'.$sTextfull.'</p>';
         $sTextfull = preg_replace('/\n\s/is','</p><p>',$sTextfull);
-        $sTextfull = preg_replace('/<p>\s*<\/p>/is','',$sTextfull);
+        $sTextfull = preg_replace('/<p>\s*<\/p>/is','',$sTextfull);*/
+        $sTextfull = $this->Text_Parser($sTextfull);
+        $sTextfull = preg_replace('/\[caption.*?[^\]]\]/mis','<br/>',$sTextfull);
+        $sTextfull = preg_replace('/\[\/caption\]/mis','<br/>',$sTextfull);
+
+        if($video = $this->getTopicParam($aTopic['id'],'video')){
+            $sTextfull .= '<iframe width="560" height="315" src="https://youtube.com/embed/'.$video.'" frameborder="0" allowfullscreen></iframe>';
+        }
+        if($rating = $this->getTopicParam($aTopic['id'],'post_rat')){
+            $oTopic->setRating($rating);
+            $oTopic->setVote($rating);
+        }
 
         //topic
         $oTopic->setTextSource($sTextfull);
-        $oTopic->setTextShort($sTextfull);
-        $oTopic->setText($sTextfull);
+        list($sTextShort,$sTextNew,$sTextCut) = $this->Text_Cut($this -> PluginAutocut_Autocut_CutAdd($oTopic->getTextSource()));
+        $oTopic->setText($this->Text_Parser($sTextNew));
+        $oTopic->setTextShort($this->Text_Parser($sTextShort));
+
         //print_r($aTopic);
         if($oBlog = $this->Blog_GetBlogByTitle($aTopic['cat'])){
             $blogId = $oBlog->getId();
@@ -441,26 +517,11 @@ class PluginWpimport_Modulewpimport extends Module
         dump($oTopic->getText());
         //dump($aTopic);
         //die('kukuukuk');
+        //print_r($oTopic);
         $this->Topic_UpdateTopic($oTopic);
+        $this->PluginWpimport_lstopic_UpdateTopic($oTopic);
     }
 
-    private function JoomlaPost2Topic($cid) {
-        $post = $this->getPosts($cid);
-        foreach($post as $aid => $aTopic) {
-            $sMD5Match = $aTopic['introtext'];
-            if(preg_match('/^<img(.*?)src=\"(.*?)\"(.*?)>(.*?)/is', $sMD5Match, $aData)) {
-                $aMD5Match = $aData['3'];
-            } else {
-                $aMD5Match = $sMD5Match;
-            }
-            if($oUser = $this->User_GetUserByLogin($aTopic['created_by'])){
-                $userid = $oUser->getId();
-            } else {
-                $userid = 257;
-            }   
-            return $this->Topic_GetTopicUnique($userid,md5($aMD5Match));
-        }
-    }
     private function findPid($comments,$pid) {
         foreach($comments as $parentid=>$comment) {
             foreach($comment as $cid=>$commbody) {
@@ -470,6 +531,7 @@ class PluginWpimport_Modulewpimport extends Module
             }
         }
     }
+
     public function addComments($cid) {
         $comments = $this->oMapper->getComments(Config::Get('plugin.wpimport.wp_prefix'),$cid);
         if(!$comments){
@@ -522,7 +584,7 @@ class PluginWpimport_Modulewpimport extends Module
     }
 
     public function addPost($tid) {
-        $post = $this->getPosts($tid);
+        $post = $this->getPost($tid);
         foreach($post as $aid => $aTopic) {
             $oTopic = $this->Pluginwpimport_Modulelstopic_getTopicByWpId($tid);
             //$oTopic = $this->JoomlaPost2Topic($tid);
@@ -550,6 +612,13 @@ class PluginWpimport_Modulewpimport extends Module
     }
     public function getTopicIdByAlias($sAlias){
         return $this->oMapper->getTopicIdByAlias($sAlias,Config::Get('plugin.wpimport.wp_prefix'));
+    }
+
+    public function getUserParam($iUserId,$sParams){
+        return $this->oMapper->getUserParam($iUserId,$sParams,Config::Get('plugin.wpimport.wp_prefix'));
+    }
+    public function getTopicParam($iTopicId,$sParams){
+        return $this->oMapper->getTopicParam($iTopicId,$sParams,Config::Get('plugin.wpimport.wp_prefix'));
     }
 }
 ?>
