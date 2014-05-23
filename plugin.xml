@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
     <name>
-	<lang name="default">Conversion of the Wordpress</lang>
+    <lang name="default">Conversion of the Wordpress</lang>
     </name>
     <author>
-	<lang name="default">1099511627776</lang>
+    <lang name="default">1099511627776</lang>
     </author>
-    <version>0.1</version>
-    <settings>{wpimport}admin/</settings>
+    <version>0.2</version>
+    <settings>{pnimport}admin/</settings>
     <requires>
-	<livestreet>v1.0</livestreet>
+    <livestreet>1.0.3</livestreet>
     </requires>
     <description>
-	<lang name="default">Conversion of the Wordpress</lang>
-	<lang name="russian">Конвертер из Wordpress</lang>
+    <lang name="default">Conversion of the Wordpress</lang>
+    <lang name="russian">Конвертер из Wordpress</lang>
     </description>
 </plugin>

@@ -496,7 +496,7 @@ class PluginWpimport_Modulewpimport extends Module
 
         //topic
         $oTopic->setTextSource($sTextfull);
-        list($sTextShort,$sTextNew,$sTextCut) = $this->Text_Cut($this -> PluginAutocut_Autocut_CutAdd($oTopic->getTextSource()));
+        list($sTextShort,$sTextNew,$sTextCut) = $this->Text_Cut($oTopic->getTextSource());
         $oTopic->setText($this->Text_Parser($sTextNew));
         $oTopic->setTextShort($this->Text_Parser($sTextShort));
 

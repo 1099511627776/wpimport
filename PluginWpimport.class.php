@@ -4,12 +4,11 @@
  *
  *   LiveStreet (v1.0)
  *   Plugin Conversion of the WordPress (v.0.1)
- *   Copyright © 2011 Bishovec Nikolay
+ *   Copyright © 2012 1099511627776
  *
  * --------------------------------------------------------
  *
- *   Plugin Page: http://netlanc.net
- *   Contact e-mail: netlanc@yandex.ru
+ *   Contact e-mail: 1099511627776@mail.ru
  *
   ---------------------------------------------------------
  */
